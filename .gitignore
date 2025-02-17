@@ -1,5 +1,5 @@
 # Byte-compiled / оптимизированные файлы Python
-__pycache__/
+pycache/
 *.py[cod]
 *$py.class
 
@@ -56,3 +56,13 @@ htmlcov/
 
 # Прочее
 *.DS_Store
+
+.env
+venv/
+pycache/
+poetry.lock
+db.sqlite3
+*.pyc
+
+# Медиа-файлы (загруженные пользователями)
+media/
