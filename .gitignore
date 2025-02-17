@@ -60,6 +60,7 @@ htmlcov/
 .env
 venv/
 pycache/
+__pycache__/
 poetry.lock
 db.sqlite3
 *.pyc
