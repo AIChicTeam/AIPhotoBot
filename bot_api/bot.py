@@ -1,4 +1,4 @@
-import asyncio
+# bot_api/bot.py
 import os
 import io
 from asgiref.sync import sync_to_async
@@ -8,13 +8,23 @@ from telegram.ext import (
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from PIL import Image
 from django.core.files.base import ContentFile
+
+
+from users.views import (
+    get_first_screen,
+    get_second_screen,
+    get_how_it_works_screen,
+    get_invite_friends_screen,
+    get_support_screen,
+    get_payment_screen
+)
+
 from bot_api.models import UserPhoto
 from payments.models import Payment
 
 TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 application = Application.builder().token(TOKEN).build()
 
-# Обёртки для работы с Django ORM
 @sync_to_async
 def get_payment(chat_id):
     try:
@@ -39,19 +49,76 @@ def create_photo(user_id, file_id, file_unique_id, processed_file):
         image=processed_file
     )
 
-async def start(update: Update, context):
+async def start_command(update: Update, context):
+    text, reply_markup = get_first_screen()
+    await update.message.reply_text(text=text, reply_markup=reply_markup)
+
+async def fallback_new_user_handler(update: Update, context):
     chat_id = update.message.chat_id
     payment = await get_payment(chat_id)
-    if not payment or payment.status != 'paid':
-        payment_url = f"https://5257-185-75-238-49.ngrok-free.app/payments/create-checkout-session/?telegram_user_id={chat_id}"
-        keyboard = [[InlineKeyboardButton("Оплатить", url=payment_url)]]
+    if payment is None:
+        text, reply_markup = get_first_screen()
+        await update.message.reply_text(text=text, reply_markup=reply_markup)
+    else:
+        await update.message.reply_text("Hello! How can I help you?")
+
+async def button_handler(update: Update, context):
+    query = update.callback_query
+    data = query.data
+    await query.answer()
+
+    if data == "go_to_second_screen":
+        text, reply_markup = get_second_screen()
+        await query.message.reply_text(text=text, reply_markup=reply_markup)
+
+    elif data == "pay":
+        text, reply_markup = get_payment_screen()
+        await query.message.reply_text(text=text, reply_markup=reply_markup)
+
+    elif data == "bank_cards":
+        chat_id = query.message.chat_id
+        payment_url = f"https://7241-185-75-238-49.ngrok-free.app/payments/create-checkout-session/?telegram_user_id={chat_id}"
+        keyboard = [[InlineKeyboardButton("Pay now (Stripe)", url=payment_url)]]
         reply_markup = InlineKeyboardMarkup(keyboard)
-        await update.message.reply_text(
-            "Пожалуйста, оплатите, перед тем как загружать фото:",
+        await query.message.reply_text(
+            "Click the button below to pay with Stripe.",
             reply_markup=reply_markup
         )
+
+    elif data == "how_it_works":
+        text, reply_markup = get_how_it_works_screen()
+        await query.message.reply_text(text=text, reply_markup=reply_markup)
+
+    elif data == "how_it_works_next":
+        await query.message.reply_text("Now you know how it works! Let's move on...")
+
+    elif data == "go_back":
+        text, reply_markup = get_second_screen()
+        await query.message.reply_text(text=text, reply_markup=reply_markup)
+
+    elif data == "upload_photos":
+        chat_id = query.message.chat_id
+        payment = await get_payment(chat_id)
+        if not payment or payment.status != 'paid':
+            payment_url = f"https://7241-185-75-238-49.ngrok-free.app/payments/create-checkout-session/?telegram_user_id={chat_id}"
+            keyboard = [[InlineKeyboardButton("Pay now", url=payment_url)]]
+            await query.message.reply_text(
+                "Please pay before uploading photos:",
+                reply_markup=InlineKeyboardMarkup(keyboard)
+            )
+        else:
+            await query.message.reply_text("Great! Send me 10 photos for AI processing.")
+
+    elif data == "invite_friends":
+        text = get_invite_friends_screen()
+        await query.message.reply_text(text)
+
+    elif data == "support":
+        text = get_support_screen()
+        await query.message.reply_text(text)
+
     else:
-        await update.message.reply_text("Привет! Загрузи 10 фото для AI-обработки!")
+        await query.message.reply_text("Unknown action.")
 
 async def handle_photo(update: Update, context):
     user_id = update.message.chat_id
@@ -112,12 +179,7 @@ async def handle_photo(update: Update, context):
         print(f"❌ Ошибка при обработке фото: {e}")
         await update.message.reply_text("❌ Ошибка при обработке фото!")
 
-async def button_handler(update: Update, context):
-    query = update.callback_query
-    await query.answer()
-    await query.message.reply_text("Пожалуйста, загрузите 10 фото. Мы не принимаем дубликаты.")
-
-# Регистрация обработчиков команд, сообщений и callback-запросов
-application.add_handler(CommandHandler("start", start))
+application.add_handler(CommandHandler("start", start_command))
+application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, fallback_new_user_handler))
 application.add_handler(MessageHandler(filters.PHOTO, handle_photo))
 application.add_handler(CallbackQueryHandler(button_handler))
