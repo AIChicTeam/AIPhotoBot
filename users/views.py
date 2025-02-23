@@ -1,5 +1,8 @@
 # users/views.py
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+from uuid import uuid4
+from asgiref.sync import sync_to_async
+from .models import Referral
 
 def get_first_screen():
     """
@@ -60,15 +63,56 @@ def get_how_it_works_screen():
     return text, InlineKeyboardMarkup(keyboard)
 
 
-def get_invite_friends_screen():
+
+def get_upload_instructions_screen():
     """
-    Экран "Invite friends" — возвращает только текст (можно добавить кнопки, если надо).
+    Сообщение, которое показывается пользователю, когда он оплатил
+    и нажимает "Upload photos".
     """
     text = (
-        "Invite 5 friends who will pay for the service.\n"
-        "Once they do, you get 20 free photos!\n"
+        "Congratulations, your payment was successful!\n"
+        "Now you can upload 10 photos. After that, you'll get 10 AI-generated images with your avatar.\n\n"
+        "Important points:\n"
+        "• The photos must only include you.\n"
+        "• Avoid photos with extreme facial expressions.\n"
+        "• Use different angles and outfits.\n"
+        "• Good lighting = better results.\n"
+        "• If iPhone asks \"Convert to JPEG\", please accept.\n"
+        "• You can only upload photos once.\n\n"
+        "Please choose your photos carefully and follow the instructions!"
     )
-    return text
+    
+    keyboard = [
+        [InlineKeyboardButton("Back", callback_data="go_back")]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    return text, reply_markup
+
+    
+
+@sync_to_async
+def get_or_create_referral(telegram_user_id):
+    return Referral.objects.get_or_create(user_id=telegram_user_id)
+
+async def get_invite_friends_screen(telegram_user_id):
+    referral, created = await get_or_create_referral(telegram_user_id)
+    referral_link = f"https://t.me/AIMelnykBot?start=ref_{referral.referral_code}"
+
+    text = (
+        "Invite your friends and get bonuses!\n\n"
+        "Share this link with your friends:\n"
+        f"{referral_link}\n\n"
+        "If they pay for the service, you will get 5 extra generations!"
+    )
+
+    keyboard = [
+        [InlineKeyboardButton("Copy link", url=referral_link)],
+        [InlineKeyboardButton("Back", callback_data="go_back")]
+    ]
+
+    return text, InlineKeyboardMarkup(keyboard)
+
+
 
 
 def get_support_screen():
