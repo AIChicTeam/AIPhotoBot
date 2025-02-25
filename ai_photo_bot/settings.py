@@ -14,6 +14,7 @@ from pathlib import Path
 import os
 from dotenv import load_dotenv
 
+
 # Загружаем .env
 load_dotenv()
 
@@ -64,6 +65,8 @@ INSTALLED_APPS = [
     "photo_processing",
     "payments",
     "bot_api",
+    "django_celery_beat",
+    "django_celery_results",
 
     
     "rest_framework",
@@ -162,5 +165,10 @@ MEDIA_URL = "/media/"
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
 
-
+#Celery
+CELERY_BROKER_URL = "redis://localhost:6379/0"
+CELERY_RESULT_BACKEND = "django-db"
+CELERY_RESULT_EXTENDED = True
+CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
+CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
 
