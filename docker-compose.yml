@@ -25,7 +25,7 @@ services:
       context: .
       dockerfile: .dockerfile
     container_name: celery_worker
-    command: celery -A ai_photo_bot worker -l info
+    command: celery -A ai_photo_bot worker -l info --pool=solo
     volumes:
       - .:/app
     depends_on:
