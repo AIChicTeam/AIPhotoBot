@@ -33,3 +33,16 @@ services:
       - web
     env_file:
       - .env
+
+  nginx:
+    image: nginx:latest
+    container_name: nginx-proxy
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf  # Mount your NGINX configuration file
+      - ./default.conf:/etc/nginx/conf.d/default.conf
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+    ports:
+      - "8081:80"
+      - "443:443"
+    depends_on:
+      - web  # Ensure web service is up before NGINX starts
