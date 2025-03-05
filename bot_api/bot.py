@@ -30,6 +30,7 @@ application = Application.builder().token(TOKEN).build()
 DOMAIN_NAME = os.getenv("DOMAIN_NAME", "localhost")
 BASE_URL = f"https://{DOMAIN_NAME}"
 
+
 @sync_to_async
 def get_payment(chat_id):
     try:
@@ -154,6 +155,7 @@ async def button_handler(update: Update, context):
         text, reply_markup = get_payment_screen()
         await query.message.reply_text(text=text, reply_markup=reply_markup)
 
+
     elif data == "go_back":
         text, reply_markup = get_second_screen()
         await query.message.reply_text(text=text, reply_markup=reply_markup)
@@ -171,6 +173,7 @@ async def button_handler(update: Update, context):
             )
         else:
             # Если оплачено, показываем инструкцию
+
             text, reply_markup = get_upload_instructions_screen()
             await query.message.reply_text(text=text, reply_markup=reply_markup)
 
