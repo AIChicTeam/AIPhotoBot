@@ -12,6 +12,8 @@ WORKDIR /app
 # Копируем файлы зависимостей
 COPY requirements.txt /app/
 
+RUN mkdir -p /app/logs
+
 # Устанавливаем зависимости
 RUN pip install --no-cache-dir -r requirements.txt psycopg2-binary
 
