@@ -40,14 +40,11 @@ application = Application.builder().token(TOKEN).build()
 DOMAIN_NAME = os.getenv("DOMAIN_NAME", "localhost")
 BASE_URL = f"https://{DOMAIN_NAME}"
 
-<<<<<<< HEAD
 storage = MemoryStorage()
 bot = Bot(token=os.getenv("TELEGRAM_BOT_TOKEN"))
 dp = Dispatcher(storage=storage)
 
 dp.include_router(telegram_payments_router)
-=======
->>>>>>> 72acd8515d6e17545e9b65d07b3c31bf58f35f34
 
 @sync_to_async
 def get_payment(chat_id):
@@ -220,11 +217,6 @@ async def button_handler(update: Update, context):
                 reply_markup=InlineKeyboardMarkup(keyboard)
             )
         else:
-<<<<<<< HEAD
-=======
-            # Если оплачено, показываем инструкцию
-
->>>>>>> 72acd8515d6e17545e9b65d07b3c31bf58f35f34
             text, reply_markup = get_upload_instructions_screen()
             await query.message.reply_text(text=text, reply_markup=reply_markup)
 
