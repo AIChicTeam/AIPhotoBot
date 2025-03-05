@@ -4,7 +4,7 @@ import logging
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from telegram import Update
-from .bot import application  # Импортируем объект application из bot.py
+from .bot import application  
 
 logger = logging.getLogger(__name__)
 

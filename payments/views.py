@@ -19,7 +19,6 @@ def create_checkout_session(request):
     if not telegram_user_id:
         return HttpResponse("Missing telegram_user_id", status=400)
 
-    # Создаем или обновляем запись платежа
     payment, _ = Payment.objects.get_or_create(telegram_user_id=telegram_user_id)
     
     session = stripe.checkout.Session.create(
@@ -30,21 +29,24 @@ def create_checkout_session(request):
                 'product_data': {
                     'name': 'Оплата за загрузку фото',
                 },
-                'unit_amount': 500,  # $10.00, например
+                'unit_amount': 500,  # например, $5.00
             },
             'quantity': 1,
         }],
         mode='payment',
-        metadata={'telegram_user_id': telegram_user_id},
+        metadata={
+            'telegram_user_id': telegram_user_id,
+            'payment_type': 'upload'
+        },
         success_url=f"{BASE_URL}/payments/success/?session_id={{CHECKOUT_SESSION_ID}}",
         cancel_url=f"{BASE_URL}/payments/cancel/",
     )
     
-    # Сохраняем session_id для дальнейшей сверки
     payment.stripe_session_id = session.id
     payment.save()
     
     return redirect(session.url, code=303)
+
 
 
 @csrf_exempt

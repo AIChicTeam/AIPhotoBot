@@ -8,6 +8,16 @@ from telegram.ext import (
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from PIL import Image
 from django.core.files.base import ContentFile
+from aiogram import Bot, Dispatcher
+from aiogram.fsm.storage.memory import MemoryStorage
+from payments.telegram_payments import router as telegram_payments_router
+import os
+
+storage = MemoryStorage()
+bot = Bot(token=os.getenv("TELEGRAM_BOT_TOKEN"))
+dp = Dispatcher(storage=storage)
+
+dp.include_router(telegram_payments_router)
 
 
 from users.models import Referral
@@ -29,6 +39,12 @@ TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 application = Application.builder().token(TOKEN).build()
 DOMAIN_NAME = os.getenv("DOMAIN_NAME", "localhost")
 BASE_URL = f"https://{DOMAIN_NAME}"
+
+storage = MemoryStorage()
+bot = Bot(token=os.getenv("TELEGRAM_BOT_TOKEN"))
+dp = Dispatcher(storage=storage)
+
+dp.include_router(telegram_payments_router)
 
 @sync_to_async
 def get_payment(chat_id):
@@ -137,6 +153,7 @@ async def button_handler(update: Update, context):
         await query.message.reply_text(text=text, reply_markup=reply_markup)
 
     elif data == "bank_cards":
+        # Оплата Stripe
         chat_id = query.message.chat_id
         payment_url = f"{BASE_URL}/payments/create-checkout-session/?telegram_user_id={chat_id}"
         keyboard = [[InlineKeyboardButton("Pay now (Stripe)", url=payment_url)]]
@@ -145,6 +162,36 @@ async def button_handler(update: Update, context):
             "Click the button below to pay with Stripe.",
             reply_markup=reply_markup
         )
+
+    elif data == "buy_stars":
+        # Оплата через Telegram Stars (XTR)
+        amount = 5  # например, предлагаем оплатить 5 "звёзд"
+
+        from aiogram.utils.keyboard import InlineKeyboardBuilder
+        from aiogram.types import LabeledPrice
+
+        kb = InlineKeyboardBuilder()
+        kb.button(text=f"Pay {amount} ⭐", pay=True)
+        kb.button(text="Cancel", callback_data="donate_cancel")
+        kb.adjust(1)
+
+        prices = [LabeledPrice(label="XTR", amount=amount)]
+
+        # Отправляем встроенный счёт (инвойс)
+        await query.message.answer_invoice(
+            title="Donate to the author",
+            description=f"For {amount} stars",
+            prices=prices,
+            provider_token="",  # Пустой токен для Telegram Stars
+            payload=f"{amount}_stars",
+            currency="XTR",
+            reply_markup=kb.as_markup()
+        )
+
+    elif data == "donate_cancel":
+        # Отмена оплаты (закрываем сообщение со счётом)
+        await query.message.delete()
+        await query.answer("Payment canceled.")
 
     elif data == "how_it_works":
         text, reply_markup = get_how_it_works_screen()
@@ -162,7 +209,6 @@ async def button_handler(update: Update, context):
         chat_id = query.message.chat_id
         payment = await get_payment(chat_id)
         if not payment or payment.status != 'paid':
-            # Если НЕ оплачено, показываем окно с оплатой
             payment_url = f"{BASE_URL}/payments/create-checkout-session/?telegram_user_id={chat_id}"
             keyboard = [[InlineKeyboardButton("Pay now", url=payment_url)]]
             await query.message.reply_text(
@@ -170,7 +216,6 @@ async def button_handler(update: Update, context):
                 reply_markup=InlineKeyboardMarkup(keyboard)
             )
         else:
-            # Если оплачено, показываем инструкцию
             text, reply_markup = get_upload_instructions_screen()
             await query.message.reply_text(text=text, reply_markup=reply_markup)
 
@@ -185,6 +230,7 @@ async def button_handler(update: Update, context):
 
     else:
         await query.message.reply_text("Unknown action.")
+
 
 
 async def handle_photo(update: Update, context):
