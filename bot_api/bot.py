@@ -27,6 +27,9 @@ from payments.models import Payment
 
 TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 application = Application.builder().token(TOKEN).build()
+DOMAIN_NAME = os.getenv("DOMAIN_NAME", "localhost")
+BASE_URL = f"https://{DOMAIN_NAME}"
+
 
 @sync_to_async
 def get_payment(chat_id):
@@ -136,7 +139,7 @@ async def button_handler(update: Update, context):
 
     elif data == "bank_cards":
         chat_id = query.message.chat_id
-        payment_url = f"https://2735-85-254-215-33.ngrok-free.app/payments/create-checkout-session/?telegram_user_id={chat_id}"
+        payment_url = f"{BASE_URL}/payments/create-checkout-session/?telegram_user_id={chat_id}"
         keyboard = [[InlineKeyboardButton("Pay now (Stripe)", url=payment_url)]]
         reply_markup = InlineKeyboardMarkup(keyboard)
         await query.message.reply_text(
@@ -162,14 +165,15 @@ async def button_handler(update: Update, context):
         payment = await get_payment(chat_id)
         if not payment or payment.status != 'paid':
             # Если НЕ оплачено, показываем окно с оплатой
-            payment_url = f"https://2735-85-254-215-33.ngrok-free.app/payments/create-checkout-session/?telegram_user_id={chat_id}"
+            payment_url = f"{BASE_URL}/payments/create-checkout-session/?telegram_user_id={chat_id}"
             keyboard = [[InlineKeyboardButton("Pay now", url=payment_url)]]
             await query.message.reply_text(
                 "Please pay before uploading photos:",
                 reply_markup=InlineKeyboardMarkup(keyboard)
             )
         else:
-            # Если ОПЛАЧЕНО, показываем инструкцию
+            # Если оплачено, показываем инструкцию
+
             text, reply_markup = get_upload_instructions_screen()
             await query.message.reply_text(text=text, reply_markup=reply_markup)
 
@@ -184,6 +188,7 @@ async def button_handler(update: Update, context):
 
     else:
         await query.message.reply_text("Unknown action.")
+
 
 async def handle_photo(update: Update, context):
     user_id = update.message.chat_id
