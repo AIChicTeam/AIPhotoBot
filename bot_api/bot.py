@@ -13,12 +13,6 @@ from aiogram.fsm.storage.memory import MemoryStorage
 from payments.telegram_payments import router as telegram_payments_router
 import os
 
-storage = MemoryStorage()
-bot = Bot(token=os.getenv("TELEGRAM_BOT_TOKEN"))
-dp = Dispatcher(storage=storage)
-
-dp.include_router(telegram_payments_router)
-
 
 from users.models import Referral
 from users.views import (
