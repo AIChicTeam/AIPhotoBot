@@ -38,7 +38,7 @@ def get_second_screen():
         [InlineKeyboardButton("Upload photos", callback_data="upload_photos")],
         [InlineKeyboardButton("Invite friends", callback_data="invite_friends")],
         [InlineKeyboardButton("Support", callback_data="support")],
-        [InlineKeyboardButton("Pay", callback_data="pay")]  # ВАЖНО: кнопка оплаты
+        [InlineKeyboardButton("Pay", callback_data="pay")]  
     ]
     return text, InlineKeyboardMarkup(keyboard)
 
@@ -143,6 +143,7 @@ def get_payment_screen():
     )
     keyboard = [
         [InlineKeyboardButton("Stripe", callback_data="bank_cards")],
+        [InlineKeyboardButton("Pay with Stars", callback_data="buy_stars")],
         [InlineKeyboardButton("Back", callback_data="go_back")]
     ]
     return text, InlineKeyboardMarkup(keyboard)
