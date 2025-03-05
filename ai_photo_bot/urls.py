@@ -23,7 +23,6 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path("bot/", include("bot_api.urls")),
     path("payments/", include("payments.urls")),
-    path('', include('django_prometheus.urls')),
 ]
 
 # Serve media files in development mode
