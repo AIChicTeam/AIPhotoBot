@@ -48,11 +48,7 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-<<<<<<< HEAD
 ALLOWED_HOSTS = [DOMAIN_NAME]
-=======
-ALLOWED_HOSTS = ["127.0.0.1", "localhost", ".ngrok-free.app", "bot.riga.services"]
->>>>>>> d323e71e071bdc6c74d62992a0d857946fd06ff2
 
 
 
