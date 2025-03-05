@@ -1,6 +1,7 @@
 # bot_api/bot.py
 import os
 import io
+from bot_api import resize_provider
 from asgiref.sync import sync_to_async
 from telegram.ext import (
     Application, CommandHandler, MessageHandler, filters, CallbackQueryHandler
@@ -27,9 +28,6 @@ from payments.models import Payment
 
 TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 application = Application.builder().token(TOKEN).build()
-DOMAIN_NAME = os.getenv("DOMAIN_NAME", "localhost")
-BASE_URL = f"https://{DOMAIN_NAME}"
-
 
 @sync_to_async
 def get_payment(chat_id):
@@ -139,7 +137,7 @@ async def button_handler(update: Update, context):
 
     elif data == "bank_cards":
         chat_id = query.message.chat_id
-        payment_url = f"{BASE_URL}/payments/create-checkout-session/?telegram_user_id={chat_id}"
+        payment_url = f"https://2735-85-254-215-33.ngrok-free.app/payments/create-checkout-session/?telegram_user_id={chat_id}"
         keyboard = [[InlineKeyboardButton("Pay now (Stripe)", url=payment_url)]]
         reply_markup = InlineKeyboardMarkup(keyboard)
         await query.message.reply_text(
@@ -165,15 +163,14 @@ async def button_handler(update: Update, context):
         payment = await get_payment(chat_id)
         if not payment or payment.status != 'paid':
             # Если НЕ оплачено, показываем окно с оплатой
-            payment_url = f"{BASE_URL}/payments/create-checkout-session/?telegram_user_id={chat_id}"
+            payment_url = f"https://2735-85-254-215-33.ngrok-free.app/payments/create-checkout-session/?telegram_user_id={chat_id}"
             keyboard = [[InlineKeyboardButton("Pay now", url=payment_url)]]
             await query.message.reply_text(
                 "Please pay before uploading photos:",
                 reply_markup=InlineKeyboardMarkup(keyboard)
             )
         else:
-            # Если оплачено, показываем инструкцию
-
+            # Если ОПЛАЧЕНО, показываем инструкцию
             text, reply_markup = get_upload_instructions_screen()
             await query.message.reply_text(text=text, reply_markup=reply_markup)
 
@@ -188,7 +185,6 @@ async def button_handler(update: Update, context):
 
     else:
         await query.message.reply_text("Unknown action.")
-
 
 async def handle_photo(update: Update, context):
     user_id = update.message.chat_id
@@ -227,18 +223,12 @@ async def handle_photo(update: Update, context):
         if image.mode != "RGB":
             image = image.convert("RGB")
 
-        width, height = image.size
-        if width >= 1024 and height >= 1024:
-            left = (width - 1024) // 2
-            top = (height - 1024) // 2
-            right = left + 1024
-            bottom = top + 1024
-            image_cropped = image.crop((left, top, right, bottom))
-        else:
-            image_cropped = image.resize((1024, 1024), resample=Image.LANCZOS)
+        target_size, target_aspect = resize_provider.determine_target_size(image)
+        image = resize_provider.crop_center(image, target_aspect)  # Обрезаем по нужному соотношению
+        image = resize_provider.resize_image(image, target_size)  # Изменяем размер
 
         output_buffer = io.BytesIO()
-        image_cropped.save(output_buffer, format="JPEG", quality=95)
+        image.save(output_buffer, format="JPEG", quality=95)
         output_buffer.seek(0)
         processed_file = ContentFile(output_buffer.read(), name=f"{file_unique_id}.jpg")
 
