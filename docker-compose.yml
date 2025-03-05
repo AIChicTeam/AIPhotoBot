@@ -6,6 +6,10 @@ services:
     container_name: django_web
     command: >
       sh -c "python manage.py migrate && uvicorn ai_photo_bot.asgi:application --host 0.0.0.0 --port 8000"
+<<<<<<< HEAD
+=======
+    volumes:
+>>>>>>> d323e71e071bdc6c74d62992a0d857946fd06ff2
     volumes:
       - .:/app
     ports:
@@ -62,4 +66,8 @@ services:
       - web  # Ensure web service is up before NGINX starts
 
 volumes: 
+<<<<<<< HEAD
   postgres_data: 
+=======
+  postgres_data: 
+>>>>>>> d323e71e071bdc6c74d62992a0d857946fd06ff2
