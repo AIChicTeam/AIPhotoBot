@@ -7,6 +7,11 @@ from django.http import HttpResponse
 from .models import Payment
 from asgiref.sync import async_to_sync
 stripe.api_key = settings.STRIPE_SECRET_KEY
+import os
+
+# Получаем доменное имя из переменных окружения
+DOMAIN_NAME = os.getenv("DOMAIN_NAME", "localhost")
+BASE_URL = f"https://{DOMAIN_NAME}"
 
 @csrf_exempt
 def create_checkout_session(request):
@@ -25,14 +30,14 @@ def create_checkout_session(request):
                 'product_data': {
                     'name': 'Оплата за загрузку фото',
                 },
-                'unit_amount': 1000,  # $10.00, например
+                'unit_amount': 500,  # $10.00, например
             },
             'quantity': 1,
         }],
         mode='payment',
         metadata={'telegram_user_id': telegram_user_id},
-        success_url='http://localhost:8000/payments/success/?session_id={CHECKOUT_SESSION_ID}',
-        cancel_url='http://localhost:8000/payments/cancel/',
+        success_url=f"{BASE_URL}/payments/success/?session_id={{CHECKOUT_SESSION_ID}}",
+        cancel_url=f"{BASE_URL}/payments/cancel/",
     )
     
     # Сохраняем session_id для дальнейшей сверки
