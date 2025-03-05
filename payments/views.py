@@ -13,6 +13,7 @@ import os
 DOMAIN_NAME = os.getenv("DOMAIN_NAME", "localhost")
 BASE_URL = f"https://{DOMAIN_NAME}"
 
+
 @csrf_exempt
 def create_checkout_session(request):
     telegram_user_id = request.GET.get("telegram_user_id")
