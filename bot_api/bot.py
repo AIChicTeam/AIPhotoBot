@@ -137,7 +137,7 @@ async def button_handler(update: Update, context):
 
     elif data == "bank_cards":
         chat_id = query.message.chat_id
-        payment_url = f"https://2735-85-254-215-33.ngrok-free.app/payments/create-checkout-session/?telegram_user_id={chat_id}"
+        payment_url = f"{BASE_URL}/payments/create-checkout-session/?telegram_user_id={chat_id}"
         keyboard = [[InlineKeyboardButton("Pay now (Stripe)", url=payment_url)]]
         reply_markup = InlineKeyboardMarkup(keyboard)
         await query.message.reply_text(
@@ -163,7 +163,7 @@ async def button_handler(update: Update, context):
         payment = await get_payment(chat_id)
         if not payment or payment.status != 'paid':
             # Если НЕ оплачено, показываем окно с оплатой
-            payment_url = f"https://2735-85-254-215-33.ngrok-free.app/payments/create-checkout-session/?telegram_user_id={chat_id}"
+            payment_url = f"{BASE_URL}/payments/create-checkout-session/?telegram_user_id={chat_id}"
             keyboard = [[InlineKeyboardButton("Pay now", url=payment_url)]]
             await query.message.reply_text(
                 "Please pay before uploading photos:",
