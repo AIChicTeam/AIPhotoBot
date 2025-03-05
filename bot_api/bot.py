@@ -28,6 +28,8 @@ from payments.models import Payment
 
 TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 application = Application.builder().token(TOKEN).build()
+DOMAIN_NAME = os.getenv("DOMAIN_NAME", "localhost")
+BASE_URL = f"https://{DOMAIN_NAME}"
 
 @sync_to_async
 def get_payment(chat_id):
