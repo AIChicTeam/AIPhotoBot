@@ -21,6 +21,13 @@ async def telegram_webhook(request):
         update = Update.de_json(data, application.bot)
         print(f"📌 Обрабатываем обновление: {update}")
 
+        # Попытка получить chat_id через effective_chat
+        chat = update.effective_chat
+        if chat:
+            print(f"🆔 Chat ID: {chat.id}")
+        else:
+            print("❗ Не удалось определить Chat ID.")
+
         if not application.running:
             await application.initialize()
 
@@ -29,3 +36,4 @@ async def telegram_webhook(request):
     else:
         print("❌ Неверный тип запроса")
         return JsonResponse({"error": "Invalid request"}, status=400)
+
