@@ -1,25 +1,14 @@
-# Пример Dockerfile для Django
+FROM python:3.10-alpine
 
-# Базовый образ
-FROM python:3.10-slim
+RUN apk update && apk add --no-cache gcc musl-dev postgresql-dev git
 
-# Устанавливаем зависимости для сборки
-RUN apt-get update && apt-get install -y build-essential git libpq-dev && rm -rf /var/lib/apt/lists/*
-
-# Создаём директорию для проекта
 WORKDIR /app
 
-# Копируем файлы зависимостей
 COPY requirements.txt /app/
 
-# Устанавливаем зависимости
 RUN pip install --no-cache-dir -r requirements.txt psycopg2-binary
 
-# Копируем код проекта
 COPY . /app/
 
-# Запускаем сборку статических файлов (если нужно)
-# RUN python manage.py collectstatic --noinput
+CMD ["gunicorn", "ai_photo_bot.asgi:application", "-k", "uvicorn.workers.UvicornWorker", "--bind", "0.0.0.0:8000", "--workers", "2"]
 
-# Запускаем сервер через Uvicorn
-CMD ["uvicorn", "ai_photo_bot.asgi:application", "--host", "0.0.0.0", "--port", "8000"]
